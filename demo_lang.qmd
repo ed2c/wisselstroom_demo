@@ -1,0 +1,103 @@
+---
+title: "Demo Wisselstroom"
+author: "Martine Jansen"
+format:
+  html:
+    toc: true
+    toc-title: "Inhoud"
+    toc-depth: 2
+    toc-expand: true
+    toc-location: left
+---
+
+# Installeren en klaarzetten
+
+## Installeren
+
+```{r}
+# Dit hoeft maar 1 keer, en als het goed is is dat al gedaan met eerst_dit.R
+# daarna kun je met een # voor de regel er een commentaarregel van maken
+# devtools::install_github("ed2c/wisselstroom")
+
+```
+
+## Klaarzetten
+
+```{r}
+library(wisselstroom)
+```
+
+
+# Data inlezen
+
+```{r}
+path_to_examplefile <- here::here("data",
+                                  "VLPBEK_2025_20240115_99XX.csv")
+dVLP_example <- read_vlpbek_data(path_to_examplefile)
+```
+
+De eerste 5 regels van het bestand bekijken:
+
+```{r}
+dVLP_example |> head(n = 5)
+```
+
+# vlpbek
+
+Maak en vlpbek object
+
+```{r}
+VLP_example <- vlpbek(dVLP_example)
+```
+
+Het object VLP_example bestaat uit een aantal onderdelen.  
+
+Een kort overzicht met `summary()`:
+
+```{r}
+summary(VLP_example)
+```
+Een uitgebreider overzicht met `str()`:
+
+```{r}
+str(VLP_example)
+```
+In de volgende paragrafen bekijken we de losse onderdelen: 
+
+## enrolments
+
+Bekijk de eerste 5 regels van enrolments
+
+```{r}
+VLP_example$enrolments |> head(n = 5)
+```
+
+## degrees
+
+Bekijk de eerste 5 regels van degrees
+
+```{r}
+VLP_example$degrees |> head(n = 5)
+```
+
+# vlpbek_compact
+
+Maak en vlpbek object
+
+```{r}
+VLP_example_compact <- compact_vlpbek(VLP_example)
+```
+
+Het object VLP_example_compact bestaat uit een aantal onderdelen.  
+
+Een kort overzicht met `summary()`:
+
+```{r}
+summary(VLP_example_compact)
+```
+Een uitgebreider overzicht met `str()`:
+
+```{r}
+str(VLP_example_compact)
+```
+

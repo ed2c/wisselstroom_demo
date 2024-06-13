@@ -1,0 +1,134 @@
+---
+title: "Demo kort"
+author: "Martine Jansen"
+format:
+  html:
+    toc: true
+    toc-title: "Inhoud"
+    toc-depth: 2
+    toc-expand: true
+    toc-location: left
+execute: 
+  echo: false
+  warning: false
+  message: false
+---
+
+
+```{r setup}
+# packages die gebruikt woden:
+# wisselstroom, here, dplyr, tidyr, ggplot2
+
+
+# libraries
+library(wisselstroom)
+library(ggplot2)
+```
+
+```{r inlezen}
+path_to_examplefile <- here::here("data",
+                                  "VLPBEK_2025_20240115_99XX.csv")
+dVLP_example <- read_vlpbek_data(path_to_examplefile)
+VLP_example <- vlpbek(dVLP_example)
+VLP_example_compact <- compact_vlpbek(VLP_example)
+
+```
+
+```{r}
+# variabelen voor zin 1
+brin_own <- VLP_example$brin_own
+date_retrieval <- VLP_example$date_retrieval
+
+# vaiabelen voor zin 2
+n_enrol <- nrow(VLP_example$enrolments)
+n_degree <- nrow(VLP_example$degrees)
+n_students <- unique(c(unique(VLP_example$enrolments$student_id),
+                       unique(VLP_example$degrees$student_id))
+                     ) |> length()
+
+
+```
+
+
+# Inleiding
+
+Dit is een korte demonstratie van het gebruik van het `wisselstroom` package.  
+
+Dit document geeft een korte analyse gericht op wisselstroom, van het voorlopige bekostigingsbestand van `r brin_own`, standdatum `r date_retrieval`.  
+Het bestand bevat `r n_enrol` inschrijvingsregels en `r n_degree` diplomaregels van `r n_students` studenten die in ieder geval in een van de twee beschreven academische jaren een inschrijving of een diploma hadden bij `r brin_own`.  
+
+# Verdeling over de BRINS
+
+Studenten kunnen in beide jaren bij `r brin_own` ingeschreven staan, of in 1 van de twee. Daarnaast kunnen ze ook inschrijvingen hebben bij andere BRINs of niet in het hoger onderwijs ingeschreven zijn.  
+Een overzicht in tabelvorm: 
+
+```{r}
+VLP_example_compact$summary_presences_brin |>
+  gt::gt()
+```
+
+
+
+In een grafiek:  
+
+```{r}
+brin_plot <- plot_brinflows(VLP_example_compact,
+               label_brin_own = "deze HOI",
+               label_other_he = "andere HOI",
+               label_outside_he = "niet in HO",
+               alpha = 0.8)
+# direct plotten in een html bleek een uitdaging
+# vandaar de omweg mt opslaan en als afbeelding invoegen
+ggsave(file = here::here("afbeeldingen", "brin_plot.png"),
+       plot = brin_plot,
+       width = 9,
+       height = 4)
+```
+
+![](afbeeldingen/brin_plot.png)
+
+# Wisselstroom 
+
+```{r}
+switches <- VLP_example_compact$switches |>
+  dplyr::mutate(wissel = ifelse(from_BRIN == brin_own,
+                       "uitgaand",
+                       "inkomend"),
+                .before = 1)
+
+n_y1 <- VLP_example_compact$enrolments_degrees_compact |>
+  dplyr::filter(enrolment_type == "single",
+                BRIN == brin_own) |>
+  nrow()
+  
+n_uitswitch <- switches |> dplyr::filter(from_BRIN == brin_own) |> dplyr::count(wt = n_students) |> as.integer()
+n_inswitch <- switches |> dplyr::filter(from_BRIN != brin_own) |> dplyr::count(wt = n_students) |> as.integer()
+
+```
+
+
+
+Er zijn `r n_y1` studenten die in het vroegste academische jaar precies 1 inschrijving hadden bij `r brin_own`. Van deze studenten zijn er `r n_uitswitch` die in het jaar erna bij een andere brin staan ingeschreven, die als uitgaande wisselstroom beschouwd kunnen worden.
+Andersom is er in het laatste academische jaar inkomende wisselstroom met een omvang van `r n_inswitch`. Zie de volgende tabel met een detaillering naar instelling en opleiding.
+
+```{r}
+switches |> 
+  dplyr::arrange(wissel,
+                 dplyr::desc(n_students)) |> gt::gt()
+```
+
+# Na behalen diploma "31001"
+
+```{r}
+after_degree_31001 <- after_degree(program_of_interest = "31001",
+             my_vlpbek_compact = VLP_example_compact)
+
+vervolg <- after_degree_31001$from_to_single
+```
+
+Er zijn `r after_degree_31001$n_students` studenten die in het academische jaar `r after_degree_31001$academic_year_from` het diploma hebben gehaald. Daarvan waren er `r after_degree_31001$n_students_enrolment_type_single` met hooguit 1 inschrijving brin/croho per jaar. Voor deze laatste groep staat in onderstaande tabel het vervolg aangegeven: 
+
+```{r}
+vervolg |> gt::gt()
+```
+
