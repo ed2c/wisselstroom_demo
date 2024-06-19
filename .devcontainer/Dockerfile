@@ -15,6 +15,8 @@ RUN install2.r --error --skipinstalled -n -1 \
         palmerpenguins \
         skimr \
         nnet \
+        bezier \
+        gt \
         kernlab \
         plotly \
         factoextra \
