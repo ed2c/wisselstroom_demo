@@ -3,6 +3,7 @@ title: "Demo kort"
 author: "Martine Jansen"
 format:
   html:
+    embed-resources: true
     toc: true
     toc-title: "Inhoud"
     toc-depth: 2
@@ -98,6 +99,7 @@ switches <- VLP_example_compact$switches |>
 
 n_y1 <- VLP_example_compact$enrolments_degrees_compact |>
   dplyr::filter(enrolment_type == "single",
+                academic_year == min(academic_year),
                 BRIN == brin_own) |>
   nrow()
   
