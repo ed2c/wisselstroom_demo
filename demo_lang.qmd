@@ -8,6 +8,7 @@ format:
     toc-depth: 2
     toc-expand: true
     toc-location: left
+    embed-resources: true
 ---
 
 # Installeren en klaarzetten
@@ -15,9 +16,9 @@ format:
 ## Installeren
 
 ```{r}
-# Dit hoeft maar 1 keer, en als het goed is is dat al gedaan met eerst_dit.R
+# Dit hoeft maar 1 keer, voordat je dit document gaat renderen.
 # daarna kun je met een # voor de regel er een commentaarregel van maken
-# devtools::install_github("ed2c/wisselstroom")
+# devtools::install_github("ed2c/wisselstroom", dependencies = TRUE, build_vignettes = TRUE)
 
 ```
 
@@ -33,34 +34,33 @@ library(wisselstroom)
 ```{r}
 path_to_examplefile <- here::here("data",
                                   "VLPBEK_2025_20240115_99XX.csv")
-dVLP_example <- read_vlpbek_data(path_to_examplefile)
+mijn_data <- read_bek_data(path_to_examplefile)
 ```
 
 De eerste 5 regels van het bestand bekijken:
 
 ```{r}
-dVLP_example |> head(n = 5)
+mijn_data |> head(n = 5)
 ```
 
-# vlpbek
+# flow_basics
 
-Maak en vlpbek object
 
 ```{r}
-VLP_example <- vlpbek(dVLP_example)
+mijn_basics <- make_flow_basics(mijn_data)
 ```
 
-Het object VLP_example bestaat uit een aantal onderdelen.  
+Het object `VLP_example`mijn_basics` bestaat uit een aantal onderdelen.  
 
 Een kort overzicht met `summary()`:
 
 ```{r}
-summary(VLP_example)
+summary(mijn_basics)
 ```
 Een uitgebreider overzicht met `str()`:
 
 ```{r}
-str(VLP_example)
+str(mijn_basics)
 ```
 In de volgende paragrafen bekijken we de losse onderdelen: 
 
@@ -69,7 +69,7 @@ In de volgende paragrafen bekijken we de losse onderdelen:
 Bekijk de eerste 5 regels van enrolments
 
 ```{r}
-VLP_example$enrolments |> head(n = 5)
+mijn_basics$enrolments |> head(n = 5)
 ```
 
 ## degrees
@@ -77,27 +77,26 @@ VLP_example$enrolments |> head(n = 5)
 Bekijk de eerste 5 regels van degrees
 
 ```{r}
-VLP_example$degrees |> head(n = 5)
+mijn_basics$degrees |> head(n = 5)
 ```
 
-# vlpbek_compact
+# flow_insights
 
-Maak en vlpbek object
 
 ```{r}
-VLP_example_compact <- compact_vlpbek(VLP_example)
+mijn_insights <- make_flow_insights(mijn_basics)
 ```
 
-Het object VLP_example_compact bestaat uit een aantal onderdelen.  
+Het object `mijn_insights` bestaat uit een aantal onderdelen.  
 
 Een kort overzicht met `summary()`:
 
 ```{r}
-summary(VLP_example_compact)
+summary(mijn_insights)
 ```
 Een uitgebreider overzicht met `str()`:
 
 ```{r}
-str(VLP_example_compact)
+str(mijn_insights)
 ```
 

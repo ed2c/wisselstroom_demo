@@ -15,6 +15,13 @@ execute:
   message: false
 ---
 
+```{r, eval = FALSE}
+# Dit hoeft maar 1 keer, voordat je dit document gaat renderen.
+# daarna kun je met een # voor de regel er een commentaarregel van maken
+# devtools::install_github("ed2c/wisselstroom", dependencies = TRUE, build_vignettes = TRUE)
+```
+
+
 
 ```{r setup}
 # packages die gebruikt woden:
@@ -29,34 +36,36 @@ library(ggplot2)
 ```{r inlezen}
 path_to_examplefile <- here::here("data",
                                   "VLPBEK_2025_20240115_99XX.csv")
-dVLP_example <- read_vlpbek_data(path_to_examplefile)
-VLP_example <- vlpbek(dVLP_example)
-VLP_example_compact <- compact_vlpbek(VLP_example)
+mijn_data <- read_bek_data(path_to_examplefile)
+mijn_basics <- make_flow_basics(mijn_data)
+mijn_insights <- make_flow_insights(mijn_basics)
 
 ```
 
 ```{r}
 # variabelen voor zin 1
-brin_own <- VLP_example$brin_own
-date_retrieval <- VLP_example$date_retrieval
+brin_own <- mijn_basics$brin_own
+date_retrieval <- mijn_basics$date_retrieval
 
 # vaiabelen voor zin 2
-n_enrol <- nrow(VLP_example$enrolments)
-n_degree <- nrow(VLP_example$degrees)
-n_students <- unique(c(unique(VLP_example$enrolments$student_id),
-                       unique(VLP_example$degrees$student_id))
+n_enrol <- nrow(mijn_basics$enrolments)
+n_degree <- nrow(mijn_basics$degrees)
+n_students <- unique(c(unique(mijn_basics$enrolments$student_id),
+                       unique(mijn_basics$degrees$student_id))
                      ) |> length()
 
+min_acyear <- min(mijn_basics$enrolments$academic_year)
+max_acyear <- max(mijn_basics$enrolments$academic_year)
 
 ```
 
 
 # Inleiding
 
-Dit is een korte demonstratie van het gebruik van het `wisselstroom` package.  
+Dit is een korte demonstratie van het gebruik van het `wisselstroom` package.   
 
 Dit document geeft een korte analyse gericht op wisselstroom, van het voorlopige bekostigingsbestand van `r brin_own`, standdatum `r date_retrieval`.  
-Het bestand bevat `r n_enrol` inschrijvingsregels en `r n_degree` diplomaregels van `r n_students` studenten die in ieder geval in een van de twee beschreven academische jaren een inschrijving of een diploma hadden bij `r brin_own`.  
+Het bestand bevat `r n_enrol` inschrijvingsregels en `r n_degree` diplomaregels van `r n_students` studenten die in ieder geval in een van de twee beschreven academische jaren (`r min_acyear` en `r max_acyear` ) een inschrijving of een diploma hadden bij `r brin_own`.  
 
 # Verdeling over de BRINS
 
@@ -64,7 +73,7 @@ Studenten kunnen in beide jaren bij `r brin_own` ingeschreven staan, of in 1 van
 Een overzicht in tabelvorm: 
 
 ```{r}
-VLP_example_compact$summary_presences_brin |>
+mijn_insights$summary_situations_brin |>
   gt::gt()
 ```
 
@@ -73,7 +82,7 @@ VLP_example_compact$summary_presences_brin |>
 In een grafiek:  
 
 ```{r}
-brin_plot <- plot_brinflows(VLP_example_compact,
+brin_plot <- plot_brinflows(mijn_insights,
                label_brin_own = "deze HOI",
                label_other_he = "andere HOI",
                label_outside_he = "niet in HO",
@@ -88,47 +97,38 @@ ggsave(file = here::here("afbeeldingen", "brin_plot.png"),
 
 ![](afbeeldingen/brin_plot.png)
 
-# Wisselstroom 
+# Switch
+
+Als een inschrijving eindigt zonder einddiploma, en de student begint het volgende academische jaar aan een andere opleiding, dan noemen we dat een switch.
+
+Aantal switches van `r min_acyear` naar `r max_acyear` is te zien in de volgende tabel: 
 
 ```{r}
-switches <- VLP_example_compact$switches |>
-  dplyr::mutate(wissel = ifelse(from_BRIN == brin_own,
-                       "uitgaand",
-                       "inkomend"),
-                .before = 1)
+mijn_insights$switches |> gt::gt()
+```
 
-n_y1 <- VLP_example_compact$enrolments_degrees_compact |>
-  dplyr::filter(enrolment_type == "single",
-                academic_year == min(academic_year),
-                BRIN == brin_own) |>
-  nrow()
-  
-n_uitswitch <- switches |> dplyr::filter(from_BRIN == brin_own) |> dplyr::count(wt = n_students) |> as.integer()
-n_inswitch <- switches |> dplyr::filter(from_BRIN != brin_own) |> dplyr::count(wt = n_students) |> as.integer()
+We kunnen ook alleen kijken naar switches van onze eigen instelling:
 
+```{r}
+mijn_insights$switches |>
+  dplyr::filter(from_brin == mijn_insights$brin_own) |>
+gt::gt()
 ```
 
 
 
-Er zijn `r n_y1` studenten die in het vroegste academische jaar precies 1 inschrijving hadden bij `r brin_own`. Van deze studenten zijn er `r n_uitswitch` die in het jaar erna bij een andere brin staan ingeschreven, die als uitgaande wisselstroom beschouwd kunnen worden.
-Andersom is er in het laatste academische jaar inkomende wisselstroom met een omvang van `r n_inswitch`. Zie de volgende tabel met een detaillering naar instelling en opleiding.
+
+
+# Na behalen diploma "31009"
 
 ```{r}
-switches |> 
-  dplyr::arrange(wissel,
-                 dplyr::desc(n_students)) |> gt::gt()
+after_degree_31009 <- after_degree(program_of_interest = "31009",
+                                   my_flow_insight = mijn_insights,
+                                   prop_exam = FALSE)
+vervolg <- after_degree_31009$from_to_single
 ```
 
-# Na behalen diploma "31001"
-
-```{r}
-after_degree_31001 <- after_degree(program_of_interest = "31001",
-             my_vlpbek_compact = VLP_example_compact)
-
-vervolg <- after_degree_31001$from_to_single
-```
-
-Er zijn `r after_degree_31001$n_students` studenten die in het academische jaar `r after_degree_31001$academic_year_from` het diploma hebben gehaald. Daarvan waren er `r after_degree_31001$n_students_enrolment_type_single` met hooguit 1 inschrijving brin/croho per jaar. Voor deze laatste groep staat in onderstaande tabel het vervolg aangegeven: 
+Er zijn `r after_degree_31009$n_students` studenten die in het academische jaar `r after_degree_31009$academic_year_from` het diploma hebben gehaald. Daarvan waren er `r after_degree_31009$n_students_enrolment_type_single` met hooguit 1 inschrijving brin/croho per jaar. Voor deze laatste groep staat in onderstaande tabel het vervolg aangegeven: 
 
 ```{r}
 vervolg |> gt::gt()
